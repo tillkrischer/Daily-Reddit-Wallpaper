@@ -188,7 +188,6 @@ def detect_desktop_environment():
 
 
 if __name__ == '__main__':
-
     args = parse_args()
     subreddit = args.subreddit
     save_dir = args.output
@@ -198,6 +197,8 @@ if __name__ == '__main__':
 
     # Get top image link
     image = get_top_image()
+    image_ext = os.path.splitext(image['url'])[1]
+    # print(image_ext)
     if "url" not in image:
         sys.exit("Error: No suitable images were found, the program is now" \
                  " exiting.")
@@ -210,10 +211,13 @@ if __name__ == '__main__':
         # Get home directory and location where image will be saved
         # (default location for Ubuntu is used)
         home_dir = os.path.expanduser("~")
-        save_location = "{home_dir}/{save_dir}/{subreddit}-{id}.jpg".format(home_dir=home_dir, save_dir=save_dir,
+        todays_date = time.strftime("%d-%m-%Y")
+        save_location = "{home_dir}/{save_dir}/{subreddit}-{id}-{date}.{image_ext}".format(home_dir=home_dir, save_dir=save_dir,
                                                                             subreddit=subreddit,
-                                                                            id=image["id"])
-
+                                                                            id=image["id"],
+                                                                            date=todays_date,
+                                                                            image_ext=image_ext)
+        print("Will save image to " + save_location)
         if os.path.isfile(save_location):
             sys.exit("Info: Image already exists, nothing to do, the program is" \
                   " now exiting")
@@ -231,7 +235,6 @@ if __name__ == '__main__':
         # Check OS and environments
         platform_name = platform.system()
         if platform_name.startswith("Lin"):
-
             # Check desktop environments for linux
             desktop_environment = detect_desktop_environment()
             if desktop_environment and desktop_environment["name"] in supported_linux_desktop_envs:
