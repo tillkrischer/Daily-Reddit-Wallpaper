@@ -4,12 +4,12 @@ from __future__ import unicode_literals
 import argparse
 import ctypes
 import os
-import praw
 import platform
 import re
 import requests
 import sys
 import time
+import json
 from configparser import ConfigParser
 from io import StringIO
 from collections import defaultdict
@@ -23,10 +23,11 @@ else:
 def load_config():
     default = defaultdict(str)
     default["subreddit"] = "wallpapers"
-    default["nsfw"] = "False"
+    default["nsfw"] = False
     default["time"] = "day"
     default["display"] = "0"
     default["output"] = "Pictures/Wallpapers"
+    default["flair"] = ""
 
     config_path = os.path.expanduser("~/.config/change_wallpaper_reddit.rc")
     section_name = "root"
@@ -57,6 +58,7 @@ def load_config():
             add_to_ret(config.getint, "display")
             add_to_ret(config.get, "time")
             add_to_ret(config.get, "output")
+            add_to_ret(config.get, "flair")
 
             return ret
 
@@ -80,23 +82,53 @@ def parse_args():
                         help="Desktop display number on OS X (0: all displays, 1: main display, etc")
     parser.add_argument("-o", "--output", type=str, default=config["output"],
                         help="Set the outputfolder in the home directory to save the Wallpapers to.")
+    parser.add_argument("-f", "--flair", type=str, default=config["flair"],
+                        help="Filter subreddit submissions by Flair.")
 
     args = parser.parse_args()
     return args
 
 
-def get_top_image(sub_reddit):
+def get_submissions():
+    getVars = {}
+    url = 'https://www.reddit.com/r/{}/search.json?'.format(args.subreddit)
+    url += "q="
+    first = True
+    if not args.nsfw:
+        url += "nsfw:no"
+        first = False
+    if args.flair != "":
+        if not first:
+            url += "+"
+        url += "flair:" + args.flair
+    url += "&"
+    url += "restrict_sr=on&"
+    url += "sort=top&"
+    url += "t=" + args.time
+
+    print(url)
+    r = requests.get(url, headers = {'User-agent': user_agent})
+    j = json.loads(r.text)
+    
+    submissions = []
+    if "data" in j and "children" in j["data"] and isinstance(j["data"]["children"], list):
+        for post in j["data"]["children"]:
+            if "data" in post:
+                postdata = post["data"]
+                postsubreddit = postdata.get("subreddit_name_prefixed", "").lower();
+                if postsubreddit == "r/{}".format(subreddit):
+                    if "id" in postdata and "url" in postdata:
+                        submissions.append({"id": postdata["id"], "url": postdata["url"]})
+    return submissions
+
+def get_top_image():
     """Get image link of most upvoted wallpaper of the day
     :sub_reddit: name of the sub reddit
     :return: the image link
     """
-    submissions = sub_reddit.get_new(limit=10) if args.time == "new" else sub_reddit.get_top(params={"t": args.time},
-                                                                                             limit=10)
-    for submission in submissions:
-        ret = {"id": submission.id}
-        if not args.nsfw and submission.over_18:
-            continue
-        url = submission.url
+    for submission in get_submissions():
+        ret = {"id": submission.get("id")}
+        url = submission.get("url")
         # Strip trailing arguments (after a '?')
         url = re.sub(R"\?.*", "", url)
         if url.endswith(".jpg") or url.endswith(".png"):
@@ -109,6 +141,7 @@ def get_top_image(sub_reddit):
             id = url.rsplit("/", 1)[1].rsplit(".", 1)[0]
             ret["url"] = "http://i.imgur.com/{id}.jpg".format(id=id)
             return ret
+    return {}
 
 
 def detect_desktop_environment():
@@ -159,14 +192,12 @@ if __name__ == '__main__':
     args = parse_args()
     subreddit = args.subreddit
     save_dir = args.output
+    user_agent = "Get top wallpaper from /r/{subreddit} by /u/ssimunic".format(subreddit=subreddit)
 
     supported_linux_desktop_envs = ["gnome", "mate", "kde", "lubuntu"]
 
-    # Python Reddit Api Wrapper
-    r = praw.Reddit(user_agent="Get top wallpaper from /r/{subreddit} by /u/ssimunic".format(subreddit=subreddit))
-
     # Get top image link
-    image = get_top_image(r.get_subreddit(subreddit))
+    image = get_top_image()
     if "url" not in image:
         sys.exit("Error: No suitable images were found, the program is now" \
                  " exiting.")
