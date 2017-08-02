@@ -198,7 +198,7 @@ if __name__ == '__main__':
     # Get top image link
     image = get_top_image()
     image_ext = os.path.splitext(image['url'])[1]
-    # print(image_ext)
+    print(image_ext)
     if "url" not in image:
         sys.exit("Error: No suitable images were found, the program is now" \
                  " exiting.")
@@ -212,7 +212,7 @@ if __name__ == '__main__':
         # (default location for Ubuntu is used)
         home_dir = os.path.expanduser("~")
         todays_date = time.strftime("%d-%m-%Y")
-        save_location = "{home_dir}/{save_dir}/{subreddit}-{id}.{image_ext}".format(home_dir=home_dir, save_dir=save_dir,
+        save_location = "{home_dir}/{save_dir}/{subreddit}-{id}{image_ext}".format(home_dir=home_dir, save_dir=save_dir,
                                                                             subreddit=subreddit,
                                                                             id=image["id"],
                                                                             image_ext=image_ext)
