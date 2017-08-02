@@ -2,8 +2,7 @@
 Description=Change wallpaper daily
 
 [Timer]
-#OnCalendar=daily
-OnCalendar=*:0/2
+OnCalendar=daily
 Persistent=true     
  
 [Install]
