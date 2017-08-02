@@ -1,0 +1,7 @@
+[Unit]
+Description=Daily Reddit Wallpaper
+After=graphical.target
+
+[Service]
+ExecStart=/home/till/bin/change_wallpaper_reddit.py -s animewallpaper -t week -f desktop
+
