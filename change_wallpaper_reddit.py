@@ -235,7 +235,9 @@ if __name__ == '__main__':
             # Check desktop environments for linux
             desktop_environment = detect_desktop_environment()
             if desktop_environment and desktop_environment["name"] in supported_linux_desktop_envs:
-                os.system(desktop_environment["command"].format(save_location=save_location))
+                #os.system(desktop_environment["command"].format(save_location=save_location))
+                cmd = desktop_environment["command"].format(save_location=save_location)
+                subprocess.Popen(cmd.split())
             else:
                 print("Unsupported desktop environment")
 
