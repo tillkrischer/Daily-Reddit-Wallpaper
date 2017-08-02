@@ -212,10 +212,9 @@ if __name__ == '__main__':
         # (default location for Ubuntu is used)
         home_dir = os.path.expanduser("~")
         todays_date = time.strftime("%d-%m-%Y")
-        save_location = "{home_dir}/{save_dir}/{subreddit}-{id}-{date}.{image_ext}".format(home_dir=home_dir, save_dir=save_dir,
+        save_location = "{home_dir}/{save_dir}/{subreddit}-{id}.{image_ext}".format(home_dir=home_dir, save_dir=save_dir,
                                                                             subreddit=subreddit,
                                                                             id=image["id"],
-                                                                            date=todays_date,
                                                                             image_ext=image_ext)
         print("Will save image to " + save_location)
 
